@@ -6,8 +6,10 @@ description   = "RC4 library implementation"
 license       = "MIT"
 srcDir        = "src"
 
+skipDirs = @["tests"]
+
 
 
 # Dependencies
 
-requires "nim >= 0.20.9"
+requires "nim >= 0.20.0"
