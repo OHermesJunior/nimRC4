@@ -12,7 +12,10 @@ Using this library is as simple as this:
 ```
 
 ## Installation
-Use (nimble)[https://github.com/nim-lang/nimble/]: `nimble install RC4`
+Installation via [nimble](https://github.com/nim-lang/nimble/):
+```bash
+> nimble install RC4
+```
 
 
 ## Disclaimer
