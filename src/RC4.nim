@@ -1,47 +1,34 @@
 import strutils
 
 proc genKeystream(key: string): array[256, int] =
-  var converted_key: seq[int]
-  var state: array[256, int]
   for i in 0..255:
-    state[i] = i
-  for c in key:
-    converted_key.add(ord(c))
+    result[i] = i
+  var j, k = 0
+  for i in 0..255:
+    j = (j + result[i] + ord(key[k])) mod 256
+    swap(result[i], result[j])
+    k = (k + 1) mod key.len
 
-  var j, h = 0
-  for i in 0..255:
-    j = (j + state[i] + converted_key[h]) mod 256
-    var temp = state[i]
-    state[i] = state[j]
-    state[j] = temp
-    h = (h + 1) mod key.len
-  return state
+iterator iterate(keystream: var array[256, int],
+                size: int, incr = 1): tuple[i, j, k: int] =
+  var i, j, k = 0
+  while i < size:
+    j = (j + 1) mod 256
+    k = (k + keystream[j]) mod 256
+    swap(keystream[k], keystream[j])
+    yield (i, j, k)
+    i += incr
 
 proc toRC4*(key, data: string): string =
-  var converted_data: seq[int]
-  for c in data:
-    converted_data.add(ord(c))
+  var keyst = genKeystream(key)
 
-  var state = genKeystream(key)
-  var j, h = 0
-
-  for c in converted_data:
-    j = (j + 1) mod 256
-    h = (h + state[j]) mod 256
-    var temp = state[h]
-    state[h] = state[j]
-    state[j] = temp
-    result.add((c xor state[(state[j] + state[h]) mod 256]).toHex(2))
+  for i, j, k in iterate(keyst, data.len):
+    result.add((ord(data[i]) xor keyst[(keyst[j] +
+                keyst[k]) mod 256]).toHex(2))
 
 proc fromRC4*(key, data: string): string =
-  var state = genKeystream(key)
-  var i, j, h = 0
+  var keyst = genKeystream(key)
 
-  while i < data.len:
-    j = (j + 1) mod 256
-    h = (h + state[j]) mod 256
-    var temp = state[h]
-    state[h] = state[j]
-    state[j] = temp
-    result.add(char((fromHex[int](data[i] & data[i+1]) xor state[(state[j] + state[h]) mod 256])))
-    i += 2
+  for i, j, k in iterate(keyst, data.len, 2):
+    result.add((fromHex[int](data[i] & data[i+1]) xor
+                keyst[(keyst[j] + keyst[k]) mod 256]).char)
